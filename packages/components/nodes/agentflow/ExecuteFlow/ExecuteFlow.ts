@@ -205,9 +205,22 @@ class ExecuteFlow_Agentflow implements INode {
             const response = await secureAxiosRequest(requestConfig)
 
             let resultText = ''
-            if (response.data.text) resultText = response.data.text
-            else if (response.data.json) resultText = '```json\n' + JSON.stringify(response.data.json, null, 2)
-            else resultText = JSON.stringify(response.data, null, 2)
+            let sourceDocuments = null
+            let usedTools = null
+            let artifacts = null
+            let fileAnnotations = null
+
+            if (response.data.text) {
+                resultText = response.data.text
+                sourceDocuments = response.data.sourceDocuments || null
+                usedTools = response.data.usedTools || null
+                artifacts = response.data.artifacts || null
+                fileAnnotations = response.data.fileAnnotations || null
+            } else if (response.data.json) {
+                resultText = '```json\n' + JSON.stringify(response.data.json, null, 2)
+            } else {
+                resultText = JSON.stringify(response.data, null, 2)
+            }
 
             if (isLastNode && sseStreamer) {
                 sseStreamer.streamTokenEvent(options.chatId, resultText)
@@ -245,7 +258,11 @@ class ExecuteFlow_Agentflow implements INode {
                     ]
                 },
                 output: {
-                    content: resultText
+                    content: resultText,
+                    sourceDocuments,
+                    usedTools,
+                    artifacts,
+                    fileAnnotations
                 },
                 state: newState,
                 chatHistory: [
