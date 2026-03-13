@@ -22,4 +22,12 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
 COPY --from=build /usr/local/bin /usr/local/bin
 
+# Créer le dossier de stockage et donner les droits à node (pendant qu'on est root)
+RUN mkdir -p /opt/flowise/.flowise/storage \
+    && chown -R node:node /opt/flowise
+
+ENV FLOWISE_PATH=/opt/flowise/.flowise
+
+USER node
+
 ENTRYPOINT ["flowise", "start"]
