@@ -255,10 +255,16 @@ class ExecuteFlow_SeqAgents implements INode {
     try {
         const response = await fetch(url, options);
         const resp = await response.json();
-        return resp.text;
+        return {
+            text: resp.text,
+            sourceDocuments: resp.sourceDocuments || null,
+            usedTools: resp.usedTools || null,
+            artifacts: resp.artifacts || null,
+            fileAnnotations: resp.fileAnnotations || null
+        };
     } catch (error) {
         console.error(error);
-        return '';
+        return { text: '' };
     }
 `
 
@@ -267,7 +273,22 @@ class ExecuteFlow_SeqAgents implements INode {
                     useSandbox: false
                 })
 
-                if (typeof response === 'object') {
+                // Extract metadata from response object
+                let responseText = ''
+                let sourceDocuments = null
+                let usedTools = null
+                let artifacts = null
+                let fileAnnotations = null
+
+                if (typeof response === 'object' && response !== null) {
+                    responseText = response.text || ''
+                    sourceDocuments = response.sourceDocuments || null
+                    usedTools = response.usedTools || null
+                    artifacts = response.artifacts || null
+                    fileAnnotations = response.fileAnnotations || null
+                    // Keep original response for backward compatibility if needed
+                    response = responseText
+                } else if (typeof response === 'object') {
                     response = JSON.stringify(response)
                 }
 
@@ -275,9 +296,13 @@ class ExecuteFlow_SeqAgents implements INode {
                     return {
                         messages: [
                             new HumanMessage({
-                                content: response,
+                                content: responseText,
                                 additional_kwargs: {
-                                    nodeId: nodeData.id
+                                    nodeId: nodeData.id,
+                                    sourceDocuments,
+                                    usedTools,
+                                    artifacts,
+                                    fileAnnotations
                                 }
                             })
                         ]
@@ -287,9 +312,13 @@ class ExecuteFlow_SeqAgents implements INode {
                 return {
                     messages: [
                         new AIMessage({
-                            content: response,
+                            content: responseText,
                             additional_kwargs: {
-                                nodeId: nodeData.id
+                                nodeId: nodeData.id,
+                                sourceDocuments,
+                                usedTools,
+                                artifacts,
+                                fileAnnotations
                             }
                         })
                     ]
