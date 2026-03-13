@@ -1,5 +1,5 @@
 # Build local monorepo image
-# docker build --no-cache -t  flowise .
+# docker build --no-cache -t flowise .
 
 # Run image
 # docker run -d -p 3000:3000 flowise
@@ -36,6 +36,10 @@ RUN pnpm install && \
 
 # Give the node user ownership of the application files
 RUN chown -R node:node .
+
+# Créer le dossier de stockage et donner les droits à node (pendant qu'on est encore root)
+RUN mkdir -p /opt/flowise/.flowise/storage \
+    && chown -R node:node /opt/flowise
 
 # Switch to non-root user (node user already exists in node:20-alpine)
 USER node
